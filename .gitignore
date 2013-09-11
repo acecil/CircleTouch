@@ -11,3 +11,13 @@
 *.lai
 *.la
 *.a
+
+# Visual Studio project file related
+*.opensdf
+*.sdf
+*.vcxproj.user
+*.suo
+
+# Build files.
+Debug/*
+Release/*
