@@ -64,17 +64,17 @@ CircleTouchApp::CircleTouchApp()
 mCirclesResidue(0.0), mCirclesPerSec(1.0),
 mRadiusPerSec(0.1), mCircles()
 {
-	reset();
 }
 
 void CircleTouchApp::prepareSettings(Settings *settings)
 {
+	settings->setTitle("CircleTouch");
 	settings->setResizable(true);
 }
 
 void CircleTouchApp::setup()
 {
-	mLastUpdateTime = getElapsedSeconds();
+	reset();
 }
 
 void CircleTouchApp::mouseDown(MouseEvent event)
@@ -314,4 +314,4 @@ void CircleTouchApp::drawGameOver()
 	gl::draw(tex, Vec2f((getWindowWidth() - tex.getWidth()) / 2.0F, (getWindowHeight() - tex.getHeight()) / 2.0F));
 }
 
-CINDER_APP_NATIVE(CircleTouchApp, RendererGl)
+CINDER_APP_NATIVE(CircleTouchApp, RendererGl(0))
