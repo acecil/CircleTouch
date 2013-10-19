@@ -17,6 +17,7 @@ public:
 	Vec2f getPos() const { return mPos; }
 	void setRadius(float radius) { mRadius = radius; }
 	float getRadius() const { return mRadius; }
+	double getArea() const { return M_PI * mRadius * mRadius; }
 	void setColor(Color color) { mColor = color; }
 	Color getColor() const { return mColor; }
 
