@@ -3,8 +3,15 @@
 #include <random>
 
 #include "cinder/app/AppNative.h"
+#ifdef CINDER_WINRT
+#include "cinder/app/RendererDx.h"
+#include "cinder/dx/dx.h"
+#include "cinder/dx/DxTexture.h"
+namespace gl = cinder::dx;
+#else
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
+#endif
 #include "cinder/Text.h"
 #include "cinder/Font.h"
 
@@ -201,8 +208,7 @@ void CircleTouchApp::reset()
 
 void CircleTouchApp::draw()
 {
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	gl::clear(Color(0.1f, 0.1f, 0.1f));
 	gl::setMatricesWindow(getWindowSize());
 	gl::enableAlphaBlending(false);
 
@@ -233,14 +239,14 @@ void CircleTouchApp::drawText(std::string text, Vec2f pos, Color color)
 	layout.setColor(color);
 	layout.addLine(text);
 	gl::color(color);
-	auto tex = gl::Texture(layout.render(true, false));
+	auto tex = gl::Texture::create(layout.render(true, false));
 	if (pos.x < 0.0)
 	{
-		pos.x = getWindowWidth() - tex.getWidth() + pos.x;
+		pos.x = getWindowWidth() - tex->getWidth() + pos.x;
 	}
 	if (pos.y < 0.0)
 	{
-		pos.y = getWindowHeight() - tex.getHeight() + pos.y;
+		pos.y = getWindowHeight() - tex->getHeight() + pos.y;
 	}
 	gl::draw(tex, pos);
 }
@@ -291,8 +297,8 @@ void CircleTouchApp::drawPaused()
 	layout.setFont(Font("Arial", 24));
 	layout.addCenteredLine("Spacebar to continue");
 	gl::color(Color::white());
-	auto tex = gl::Texture(layout.render(true, false));
-	gl::draw(tex, Vec2f((getWindowWidth() - tex.getWidth()) / 2.0F, (getWindowHeight() - tex.getHeight()) / 2.0F));
+	auto tex = gl::Texture::create(layout.render(true, false));
+	gl::draw(tex, Vec2f((getWindowWidth() - tex->getWidth()) / 2.0F, (getWindowHeight() - tex->getHeight()) / 2.0F));
 }
 
 void CircleTouchApp::drawGameOver()
@@ -310,8 +316,12 @@ void CircleTouchApp::drawGameOver()
 	layout.setFont(Font("Arial", 24));
 	layout.addCenteredLine("Spacebar to restart");
 	gl::color(Color("red"));
-	auto tex = gl::Texture(layout.render(true, false));
-	gl::draw(tex, Vec2f((getWindowWidth() - tex.getWidth()) / 2.0F, (getWindowHeight() - tex.getHeight()) / 2.0F));
+	auto tex = gl::Texture::create(layout.render(true, false));
+	gl::draw(tex, Vec2f((getWindowWidth() - tex->getWidth()) / 2.0F, (getWindowHeight() - tex->getHeight()) / 2.0F));
 }
 
+#ifdef CINDER_WINRT
+CINDER_APP_NATIVE(CircleTouchApp, RendererDx(0))
+#else
 CINDER_APP_NATIVE(CircleTouchApp, RendererGl(0))
+#endif
