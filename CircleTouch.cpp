@@ -238,6 +238,7 @@ void CircleTouchApp::drawText(std::string text, Vec2f pos, Color color)
 	layout.setFont(Font("Arial", 24));
 	layout.setColor(color);
 	layout.addLine(text);
+	layout.addLine(""); // Fix while single line winrt text is rendered incorrect vertically.
 	gl::color(color);
 	auto tex = gl::Texture::create(layout.render(true, false));
 	if (pos.x < 0.0)
@@ -296,6 +297,7 @@ void CircleTouchApp::drawPaused()
 	layout.addCenteredLine("Paused");
 	layout.setFont(Font("Arial", 24));
 	layout.addCenteredLine("Spacebar to continue");
+	layout.addCenteredLine(""); // Workaround for winrt.
 	gl::color(Color::white());
 	auto tex = gl::Texture::create(layout.render(true, false));
 	gl::draw(tex, Vec2f((getWindowWidth() - tex->getWidth()) / 2.0F, (getWindowHeight() - tex->getHeight()) / 2.0F));
