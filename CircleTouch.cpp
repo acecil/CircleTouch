@@ -317,6 +317,7 @@ void CircleTouchApp::drawGameOver()
 	layout.addCenteredLine("Score: " + std::to_string(static_cast<int>(mScore)));
 	layout.setFont(Font("Arial", 24));
 	layout.addCenteredLine("Spacebar to restart");
+	layout.addCenteredLine(""); // Workaround for winrt.
 	gl::color(Color("red"));
 	auto tex = gl::Texture::create(layout.render(true, false));
 	gl::draw(tex, Vec2f((getWindowWidth() - tex->getWidth()) / 2.0F, (getWindowHeight() - tex->getHeight()) / 2.0F));
