@@ -38,6 +38,7 @@ class CircleTouchApp : public AppNative {
 	void drawNumCircles();
 	void drawLives();
 	void drawLostLife();
+	void drawPause();
 	void drawPaused();
 	void drawGameOver();
 
@@ -50,6 +51,7 @@ private:
 	double mRadiusPerSec;
 	vector<Circle> mCircles;
 
+	bool mRunOnce;
 	bool mGameOver;
 	bool mPaused;
 	unsigned int mLevel;
@@ -61,15 +63,22 @@ private:
 
 	static const double MAX_CIRCLE_AREA;
 	static const unsigned int CIRCLES_PER_LEVEL;
+	static const float PAUSE_Y_POS;
+	static const float PAUSE_WIDTH;
+	static const float PAUSE_HEIGHT;
 };
 
 const double CircleTouchApp::MAX_CIRCLE_AREA = 0.5;
 const unsigned int CircleTouchApp::CIRCLES_PER_LEVEL = 20;
+const float CircleTouchApp::PAUSE_Y_POS = 20.0f;
+const float CircleTouchApp::PAUSE_WIDTH = 60.0f;
+const float CircleTouchApp::PAUSE_HEIGHT = 60.0f;
+
 
 CircleTouchApp::CircleTouchApp()
 : mDev(), mEng(mDev()), mLastUpdateTime(0.0),
 mCirclesResidue(0.0), mCirclesPerSec(1.0),
-mRadiusPerSec(0.1), mCircles()
+mRadiusPerSec(0.1), mCircles(), mRunOnce(false)
 {
 }
 
@@ -85,15 +94,31 @@ void CircleTouchApp::setup()
 }
 
 void CircleTouchApp::mouseDown(MouseEvent event)
-{		
-	if (mGameOver || mPaused)
-	{
-		return;
-	}
+{
 	auto pos(event.getPos());
 	auto w(getWindowWidth());
 	auto h(getWindowHeight());
 	Vec2f sp(static_cast<float>(pos.x) / w, static_cast<float>(pos.y) / h);
+
+	/* Check for pause/unpause. */
+	if ((((w - PAUSE_WIDTH) / 2.0f) <= pos.x) && (pos.x <= ((w + PAUSE_WIDTH) / 2.0f))
+		&& ((PAUSE_Y_POS <= pos.y) && (pos.y <= (PAUSE_Y_POS + PAUSE_HEIGHT))))
+	{
+		if (mGameOver || !mRunOnce)
+		{
+			mRunOnce = true;
+			reset();
+		}
+		else
+		{
+			mPaused = !mPaused;
+			mLastUpdateTime = getElapsedSeconds();
+		}
+	}
+	else if (mGameOver || mPaused)
+	{
+		return;
+	}
 
 	for(auto it = begin(mCircles); it != end(mCircles); )
 	{
@@ -131,8 +156,9 @@ void CircleTouchApp::keyDown(KeyEvent event)
 		setFullScreen(!isFullScreen());
 		break;
 	case KeyEvent::KEY_SPACE:
-		if (mGameOver)
+		if (mGameOver || !mRunOnce)
 		{
+			mRunOnce = true;
 			reset();
 		}
 		else
@@ -146,7 +172,7 @@ void CircleTouchApp::keyDown(KeyEvent event)
 
 void CircleTouchApp::update()
 {
-	if (mGameOver || mPaused)
+	if (mGameOver || mPaused || !mRunOnce)
 	{
 		return;
 	}
@@ -180,6 +206,7 @@ void CircleTouchApp::update()
 			if (mNumLives == 0)
 			{
 				mGameOver = true;
+				mRunOnce = true;
 			}
 			it = mCircles.erase(it);
 		}
@@ -218,6 +245,7 @@ void CircleTouchApp::draw()
 	drawNumCircles();
 	drawLives();
 	drawLostLife();
+	drawPause();
 	drawPaused();
 	drawGameOver();
 }
@@ -285,6 +313,27 @@ void CircleTouchApp::drawLostLife()
 	mShowLostLife = false;
 }
 
+void CircleTouchApp::drawPause()
+{
+	const auto winW = static_cast<float>(getWindowWidth());
+	const auto xPos = winW / 2.0f;
+	const auto wOver2 = PAUSE_WIDTH / 2.0f;
+	const auto wOver6 = PAUSE_WIDTH / 6.0f;
+
+	gl::color(Color(0.5f, 0.5f, 0.5f));
+	if (mPaused || mGameOver || !mRunOnce)
+	{
+		gl::drawSolidTriangle(Vec2f(xPos - wOver2, PAUSE_Y_POS),
+			Vec2f(xPos + wOver2, PAUSE_Y_POS + PAUSE_HEIGHT / 2.0f),
+			Vec2f(xPos - wOver2, PAUSE_Y_POS + PAUSE_HEIGHT));
+	}
+	else
+	{
+		gl::drawSolidRect(Rectf(Vec2f(xPos - wOver2, PAUSE_Y_POS), Vec2f(xPos - wOver6, PAUSE_Y_POS + PAUSE_HEIGHT)));
+		gl::drawSolidRect(Rectf(Vec2f(xPos + wOver2, PAUSE_Y_POS), Vec2f(xPos + wOver6, PAUSE_Y_POS + PAUSE_HEIGHT)));
+	}
+}
+
 void CircleTouchApp::drawPaused()
 {
 	if (!mPaused)
@@ -305,19 +354,31 @@ void CircleTouchApp::drawPaused()
 
 void CircleTouchApp::drawGameOver()
 {
-	if (!mGameOver)
+	if (!mGameOver && mRunOnce)
 	{
 		return;
 	}
 	TextLayout layout;
-	layout.setFont(Font("Arial", 60));
-	layout.setColor(Color("red"));
-	layout.addCenteredLine("Game Over");
-	layout.setFont(Font("Arial", 48));
-	layout.addCenteredLine("Score: " + std::to_string(static_cast<int>(mScore)));
-	layout.setFont(Font("Arial", 24));
-	layout.addCenteredLine("Spacebar to restart");
-	layout.addCenteredLine(""); // Workaround for winrt.
+	if (mGameOver)
+	{
+		layout.setFont(Font("Arial", 60));
+		layout.setColor(Color("red"));
+		layout.addCenteredLine("Game Over");
+		layout.setFont(Font("Arial", 48));
+		layout.addCenteredLine("Score: " + std::to_string(static_cast<int>(mScore)));
+		layout.setFont(Font("Arial", 24));
+		layout.addCenteredLine("Spacebar to restart");
+		layout.addCenteredLine(""); // Workaround for winrt.
+	}
+	else
+	{
+		layout.setFont(Font("Arial", 60));
+		layout.setColor(Color("white"));
+		layout.addCenteredLine("Circle Touch");
+		layout.setFont(Font("Arial", 24));
+		layout.addCenteredLine("Spacebar to start");
+		layout.addCenteredLine(""); // Workaround for winrt.
+	}
 	gl::color(Color("red"));
 	auto tex = gl::Texture::create(layout.render(true, false));
 	gl::draw(tex, Vec2f((getWindowWidth() - tex->getWidth()) / 2.0F, (getWindowHeight() - tex->getHeight()) / 2.0F));
